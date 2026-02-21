@@ -1,0 +1,326 @@
+# MSME Credit Engine v3.0 — Implementation Plan
+
+## Objective
+
+Redesign the MSME lending risk orchestrator from a single-pathway model into a **5-segment adaptive credit engine** that can underwrite:
+- Formally registered businesses with full financial documentation
+- Semi-formal businesses with partial digital footprints
+- Fully informal cash-economy businesses with zero formal records
+
+---
+
+## 🏦 Banker's Framing
+
+> *"A credit decision is only as good as the data behind it. When data is absent, the underwriter's job is not to refuse — it is to find proxy evidence of the three things that actually predict repayment: the ability to pay, the willingness to pay, and the stability of those two over time."*
+
+Every segment below answers these three questions differently.
+
+| Question | Tier 1 Answer | Tier 2C Answer | Tier 3 Answer |
+|---|---|---|---|
+| Ability to pay | Bank-verified income | UPI-estimated income ± sector adjustment | Stability proxy + sector floor |
+| Willingness to pay | EMI repayment history | Utility consistency + UPI discipline | Years at location, employer status |
+| Stability | Revenue trend | UPI momentum | Business age + employee count |
+
+---
+
+## Segment Classification
+
+```
+                    ┌── Bank A/C linked + GST ──────► Tier 1  (Full Financial)
+                    │
+                    ├── GST + UPI ───────────────────► Tier 2A (Cross-validated)
+Borrower enters ───►│
+                    ├── GST only ────────────────────► Tier 2B (Declared Income)
+                    │
+                    ├── UPI only (no GST) ───────────► Tier 2C (Digital Informal)
+                    │
+                    └── Neither ──────────────────────► Tier 3  (Stability-Only)
+```
+
+---
+
+## Architecture: 5-Layer Engine
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Layer 0 — Segment Router                            │
+│  Input: GST toggle, UPI toggle, bank link toggle     │
+│  Output: Tier assignment → routes to correct pipeline│
+├─────────────────────────────────────────────────────┤
+│  Layer 1 — Segment Data Pipelines (5 paths)          │
+│  Each extracts/estimates the canonical feature set   │
+├─────────────────────────────────────────────────────┤
+│  Layer 2 — Feature Normalization + Uncertainty Flags │
+│  All 5 pipelines converge to a standard vector       │
+│  Missing/estimated features carry a confidence tag   │
+├─────────────────────────────────────────────────────┤
+│  Layer 3 — Risk Models                               │
+│  Tier 1/2A: Full calibrated XGBoost (current model)  │
+│  Tier 2B/2C: XGBoost + income uncertainty adjustment │
+│  Tier 3: Rule-based Stability Scorecard + PD floor   │
+├─────────────────────────────────────────────────────┤
+│  Layer 4 — Policy Engine                             │
+│  Segment-specific LTV caps, interest premiums        │
+│  Policy rejection flags (unchanged from current)     │
+├─────────────────────────────────────────────────────┤
+│  Layer 5 — Output                                    │
+│  PD + confidence band + risk-adjusted rate           │
+│  Segment label + recommended loan structure          │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## Proposed Changes
+
+### Component 1 — Segment Router (NEW)
+**Backend:** `segment_router.py`
+**Frontend:** 3-question gateway screen before form
+
+```
+Q1: Is the business GST registered?         → Yes/No
+Q2: Does the business accept UPI payments?  → Yes/No
+Q3: Is a bank account statement available?  → Yes/No
+```
+One API endpoint: `POST /classify-segment` → returns `{tier: "T2C", label: "Digital Informal"}`.
+
+---
+
+### Component 2 — Sector Benchmarks (NEW)
+**File:** `data/sector_benchmarks.json`
+**Endpoint:** `GET /sector-benchmarks/{industry_sector}`
+
+Returns sector-specific defaults for:
+- `revenue_growth_rate` (from RBI MSME sector reports)
+- `seasonality_coefficient` (sector seasonal index)
+- `digital_payment_ratio` (% of transactions via UPI — used for Tier 2C income grossing)
+- `under_reporting_adjustment` (Tier 2B income correction factor by sector)
+
+These are **auto-filled read-only fields** when the user selects their Industry Sector.
+
+---
+
+### Component 3 — Feature Extraction Pipelines (NEW)
+**File:** `feature_extractor.py`
+**Endpoint:** `POST /compute-features`
+
+Each tier's raw inputs are transformed into the canonical model feature set:
+
+#### Tier 1 / 2A — Financial Pipeline
+```
+Inputs:   GST GSTR-3B monthly turnover (12 values) OR bank statement CSV
+Computes: monthly_revenue, revenue_growth_rate, revenue_momentum,
+          volatility_index, payment_delay_trend_slope
+Validates: Cross-checks GST declared vs UPI-estimated if both present
+```
+
+#### Tier 2B — GST-Only Pipeline
+```
+Inputs:   GST turnover + gst_delay_months
+Computes: monthly_revenue = gst_turnover / (12 × under_reporting_factor)
+Estimates: volatility_index = sector_avg_volatility (from benchmarks)
+           revenue_momentum = 0 (neutral, unknown)
+           payment_delay_trend_slope = derived from GST delay trend
+```
+
+#### Tier 2C — UPI-Only Pipeline
+```
+Inputs:   6 monthly UPI inflow totals + sector digital_payment_ratio
+Computes: estimated_monthly_revenue = mean(upi_6m) / digital_payment_ratio
+          volatility_index = std(upi_6m) / mean(upi_6m)
+          revenue_momentum = mean(last_3) / mean(first_3) - 1
+          upi_volatility_high = 1 if volatility_index > 0.40 else 0
+Confidence: Medium — ±25% revenue estimate error band
+```
+
+#### Tier 3 — Stability Pipeline
+```
+Inputs:   Stability proxies (see below)
+Computes: stability_score (0–100)
+          estimated_revenue = sector_daily_floor × operating_days × employee_proxy_multiplier
+          PD floor applied: min PD = 0.18 regardless of score
+          Max loan = stability_score × sector_cap_multiplier
+```
+
+---
+
+### Component 4 — Stability Scorecard for Tier 3 (NEW)
+**File:** `stability_scorecard.py`
+
+**Input fields collected from Tier 3 borrower:**
+
+| Field | Type | Weight in Score |
+|---|---|---|
+| `years_at_current_location` | Number | 25% |
+| `employee_count` | Number | 20% |
+| `years_with_primary_supplier` | Number | 15% |
+| `owns_premises` | Toggle | 10% |
+| `trade_licence_registered` | Toggle | 10% |
+| `trade_association_member` | Toggle | 5% |
+| `electricity_bill_regularity` | 6-row table (expected/paid) | 15% |
+
+**Stability Score formula:**
+```python
+stability_score = (
+    min(years_at_location, 10) / 10 * 25 +
+    min(employee_count, 20) / 20 * 20 +
+    min(supplier_years, 8) / 8 * 15 +
+    owns_premises * 10 +
+    trade_licence * 10 +
+    association_member * 5 +
+    utility_consistency_pct * 15
+)
+# Range: 0–100
+```
+
+**PD mapping from Stability Score:**
+```python
+# High stability ≠ low PD — income is still unverified
+# PD floor = 0.18, ceiling = 0.65
+pd_from_stability = 0.65 - (stability_score / 100) * 0.47
+```
+
+---
+
+### Component 5 — Utility Discipline Module (UPDATED for all tiers)
+**Common across Tier 2C and Tier 3**
+
+Input: 6-month table — `{expected_₹, paid_₹, days_late}`
+```python
+utility_consistency_pct = sum(paid >= expected) / 6
+# days_late > 7 counts as unpaid
+```
+
+---
+
+### Component 6 — Income Uncertainty Layer (NEW)
+**Applied during feature normalization for Tier 2B/2C/3**
+
+Attaches a confidence tag to estimated income:
+```python
+{
+  "estimated_monthly_revenue": 85000,
+  "income_confidence": "medium",   # high/medium/low
+  "income_source": "upi_estimated",
+  "income_error_band_pct": 25,
+  "adjustment_note": "Grossed up from UPI using sector ratio 0.38 (Auto Repair)"
+}
+```
+This confidence tag propagates to the final output as:
+- Wider PD confidence interval shown to underwriter
+- Interest premium applied in Layer 4
+
+---
+
+### Component 7 — Policy Engine Updates (MODIFY)
+**File:** `main.py` — policy layer
+
+Add segment-aware caps:
+```python
+SEGMENT_POLICY = {
+    "T1":  {"max_ltv": 1.00, "interest_premium": 0.0,  "max_tenure": 60},
+    "T2A": {"max_ltv": 1.00, "interest_premium": 0.0,  "max_tenure": 60},
+    "T2B": {"max_ltv": 0.80, "interest_premium": 1.5,  "max_tenure": 48},
+    "T2C": {"max_ltv": 0.70, "interest_premium": 3.0,  "max_tenure": 36},
+    "T3":  {"max_ltv": 0.50, "interest_premium": 5.0,  "max_tenure": 24},
+}
+```
+
+---
+
+### Component 8 — Synthetic Data Generator Redesign (MODIFY)
+**File:** `advanced_data_generation.py`
+
+Add segment distribution to generated data:
+```python
+segment_distribution = {
+    "T1":  0.10,  # 10% of MSME universe
+    "T2A": 0.20,
+    "T2B": 0.15,
+    "T2C": 0.30,
+    "T3":  0.25,  # 25% fully informal
+}
+```
+
+Each segment generates its available features naturally.
+Missing features for lower tiers are **assigned from segment priors**, not from random uniform distributions.
+
+---
+
+### Component 9 — Frontend: Segment-Aware Forms (MODIFY)
+**File:** `SingleBorrowerRiskView.jsx`
+
+**Step 0 (NEW): Segment Gateway**
+3-question card before the form — determines tier and renders the correct form.
+
+**Per-tier form variations:**
+
+| Section | T1 | T2A | T2B | T2C | T3 |
+|---|---|---|---|---|---|
+| Business Identity | Full | Full | Full | Full | Full |
+| GST / Turnover | Upload | Upload | Upload | Hidden | Hidden |
+| Bank Statement | Upload | Hidden | Hidden | Hidden | Hidden |
+| UPI History (6m) | Optional | ✅ Required | Hidden | ✅ Required | Hidden |
+| Utility Bills (6m) | Optional | Optional | ✅ Required | ✅ Required | ✅ Required |
+| Stability Proxies | Hidden | Hidden | Hidden | Partial | ✅ Full |
+| Asset Values | Full | Full | Full | Simplified | Simplified |
+| Loan Request | Full | Full | Full | Capped UI | Capped UI |
+
+Sector-derived fields (`revenue_growth_rate`, `seasonality_coefficient`, `digital_payment_ratio`) shown as **read-only chips** that auto-populate on sector selection via `/sector-benchmarks/{sector}`.
+
+---
+
+## Data Flow Summary
+
+```
+User selects segment
+        │
+        ▼
+Segment-specific form rendered
+        │
+        ▼
+Raw inputs collected (UPI totals, utility bills, GST data, etc.)
+        │
+        ▼
+POST /compute-features  (feature extraction pipeline)
+        │
+Returns canonical 35-feature vector + confidence tags
+        │
+        ▼
+POST /predict_risk  (existing endpoint — unchanged API contract)
+        │
+        ▼
+Response: PD + confidence band + interest rate + policy flags
+        + segment label + income uncertainty note
+```
+
+---
+
+## New Files Summary
+
+| File | Type | Purpose |
+|---|---|---|
+| `segment_router.py` | NEW | Classifies borrower tier from 3 questions |
+| `feature_extractor.py` | NEW | Per-tier feature computation pipelines |
+| `stability_scorecard.py` | NEW | Tier 3 stability score calculator |
+| `data/sector_benchmarks.json` | NEW | Sector-specific defaults (growth rate, digital ratio, seasonality) |
+| `advanced_data_generation.py` | MODIFY | Multi-segment synthetic data with tier distribution |
+| `main.py` | MODIFY | Segment-aware policy caps + new router imports |
+| `SingleBorrowerRiskView.jsx` | MODIFY | Segment gateway + per-tier conditional form rendering |
+
+---
+
+## Verification Plan
+
+### Backend
+1. `GET /sector-benchmarks/Textile` → returns growth_rate, seasonality, digital_ratio
+2. `POST /classify-segment` with `{gst: true, upi: false, bank: false}` → returns `T2B`
+3. `POST /compute-features` with 6 UPI monthly values → returns estimated revenue, volatility, momentum
+4. `POST /predict_risk` with Tier 3 stability inputs → returns PD in range [0.18, 0.65]
+
+### Frontend
+5. Gateway question flow routes to correct form variant
+6. Sector selection auto-populates benchmark chips
+7. Tier 2C form shows computed income estimate after UPI entry
+8. Tier 3 shows stability score live as fields are filled
+9. Output shows confidence band + segment label + interest premium breakdown

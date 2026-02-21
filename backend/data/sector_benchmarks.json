@@ -1,0 +1,92 @@
+{
+    "Textile": {
+        "revenue_growth_rate": 0.05,
+        "seasonality_coefficient": 0.35,
+        "digital_payment_ratio": 0.25,
+        "under_reporting_adjustment": 1.10,
+        "sector_daily_revenue_floor": 3000,
+        "avg_volatility_index": 0.22,
+        "description": "Labour-intensive, export-driven, moderate seasonality around festival orders"
+    },
+    "Food Processing": {
+        "revenue_growth_rate": 0.08,
+        "seasonality_coefficient": 0.45,
+        "digital_payment_ratio": 0.30,
+        "under_reporting_adjustment": 1.15,
+        "sector_daily_revenue_floor": 4000,
+        "avg_volatility_index": 0.28,
+        "description": "High festival/harvest seasonality, moderate digital adoption"
+    },
+    "Agriculture": {
+        "revenue_growth_rate": 0.04,
+        "seasonality_coefficient": 0.65,
+        "digital_payment_ratio": 0.12,
+        "under_reporting_adjustment": 1.25,
+        "sector_daily_revenue_floor": 2000,
+        "avg_volatility_index": 0.38,
+        "description": "Strong seasonal pattern, mostly cash-based, high income volatility"
+    },
+    "IT Services": {
+        "revenue_growth_rate": 0.18,
+        "seasonality_coefficient": 0.10,
+        "digital_payment_ratio": 0.80,
+        "under_reporting_adjustment": 1.02,
+        "sector_daily_revenue_floor": 8000,
+        "avg_volatility_index": 0.12,
+        "description": "High digital adoption, low seasonality, strong growth trajectory"
+    },
+    "Auto Components": {
+        "revenue_growth_rate": 0.07,
+        "seasonality_coefficient": 0.20,
+        "digital_payment_ratio": 0.38,
+        "under_reporting_adjustment": 1.12,
+        "sector_daily_revenue_floor": 3500,
+        "avg_volatility_index": 0.18,
+        "description": "B2B dominant, moderate digital, linked to auto industry cycles"
+    },
+    "General Manufacturing": {
+        "revenue_growth_rate": 0.06,
+        "seasonality_coefficient": 0.18,
+        "digital_payment_ratio": 0.32,
+        "under_reporting_adjustment": 1.10,
+        "sector_daily_revenue_floor": 3000,
+        "avg_volatility_index": 0.20,
+        "description": "Diversified end markets, moderate volatility"
+    },
+    "Retail": {
+        "revenue_growth_rate": 0.09,
+        "seasonality_coefficient": 0.50,
+        "digital_payment_ratio": 0.55,
+        "under_reporting_adjustment": 1.20,
+        "sector_daily_revenue_floor": 5000,
+        "avg_volatility_index": 0.25,
+        "description": "High festival peak (Diwali/Eid), significant UPI adoption, cash under-reporting common"
+    },
+    "Hospitality": {
+        "revenue_growth_rate": 0.10,
+        "seasonality_coefficient": 0.55,
+        "digital_payment_ratio": 0.48,
+        "under_reporting_adjustment": 1.18,
+        "sector_daily_revenue_floor": 4500,
+        "avg_volatility_index": 0.30,
+        "description": "Tourist season driven, recovering post-COVID, moderate digital"
+    },
+    "Healthcare": {
+        "revenue_growth_rate": 0.12,
+        "seasonality_coefficient": 0.15,
+        "digital_payment_ratio": 0.42,
+        "under_reporting_adjustment": 1.08,
+        "sector_daily_revenue_floor": 6000,
+        "avg_volatility_index": 0.14,
+        "description": "Stable demand, low seasonality, growing digital payment adoption"
+    },
+    "Education Services": {
+        "revenue_growth_rate": 0.11,
+        "seasonality_coefficient": 0.40,
+        "digital_payment_ratio": 0.60,
+        "under_reporting_adjustment": 1.05,
+        "sector_daily_revenue_floor": 5000,
+        "avg_volatility_index": 0.16,
+        "description": "Academic year driven seasonality, high digital adoption post-COVID"
+    }
+}

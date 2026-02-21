@@ -1,0 +1,277 @@
+{
+    "emi_to_revenue_ratio": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 3.4,
+        "direction": "+"
+    },
+    "utility_consistency_pct": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 2.3,
+        "direction": "-"
+    },
+    "gst_registered": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 2.2,
+        "direction": "-"
+    },
+    "annual_turnover": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 1.3,
+        "direction": "-"
+    },
+    "volatility_index": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 1.3,
+        "direction": "+"
+    },
+    "inventory_value": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 1.3,
+        "direction": "-"
+    },
+    "existing_emi": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 1.2,
+        "direction": "-"
+    },
+    "stability_score": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 1.2,
+        "direction": "-"
+    },
+    "payment_delay_trend_slope": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 1.2,
+        "direction": "+"
+    },
+    "seasonality_coefficient": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 1.2,
+        "direction": "+"
+    },
+    "total_asset_value": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 1.2,
+        "direction": "-"
+    },
+    "property_value": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 1.2,
+        "direction": "+"
+    },
+    "macro_stress_factor_Industry Slowdown (Severe Stress)": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 1.2,
+        "direction": "+"
+    },
+    "machinery_value": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 1.1,
+        "direction": "+"
+    },
+    "loan_amount_requested": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 1.1,
+        "direction": "+"
+    },
+    "revenue_momentum": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 1.0,
+        "direction": "-"
+    },
+    "credit_history_length": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 1.0,
+        "direction": "-"
+    },
+    "total_emi": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 1.0,
+        "direction": "+"
+    },
+    "revenue_growth_rate": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 1.0,
+        "direction": "-"
+    },
+    "income_confidence_encoded": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 1.0,
+        "direction": "-"
+    },
+    "years_at_location": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 1.0,
+        "direction": "-"
+    },
+    "proposed_emi": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.8,
+        "direction": "-"
+    },
+    "employee_count": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.7,
+        "direction": "-"
+    },
+    "years_in_operation": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.7,
+        "direction": "+"
+    },
+    "delayed_payments": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.6,
+        "direction": "-"
+    },
+    "macro_stress_factor_Baseline": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.6,
+        "direction": "-"
+    },
+    "loan_tenure_months": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.6,
+        "direction": "-"
+    },
+    "business_type_Services": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.6,
+        "direction": "+"
+    },
+    "macro_stress_factor_Inflation Spike (Stress)": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.5,
+        "direction": "+"
+    },
+    "existing_loans": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.5,
+        "direction": "-"
+    },
+    "macro_stress_factor_Festival Season (Boom)": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.5,
+        "direction": "-"
+    },
+    "upi_volatility_high": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.4,
+        "direction": "+"
+    },
+    "borrower_segment_T2C": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.4,
+        "direction": "+"
+    },
+    "bank_account_years": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.4,
+        "direction": "+"
+    },
+    "gst_delay_months": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.3,
+        "direction": "+"
+    },
+    "borrower_segment_T2A": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.3,
+        "direction": "-"
+    },
+    "past_defaults": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.2,
+        "direction": "-"
+    },
+    "industry_sector_General Manufacturing": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.2,
+        "direction": "-"
+    },
+    "industry_sector_Food Processing": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.2,
+        "direction": "-"
+    },
+    "business_type_Trading": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.2,
+        "direction": "-"
+    },
+    "industry_sector_Hospitality": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.1,
+        "direction": "+"
+    },
+    "udyam_registered": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.1,
+        "direction": "+"
+    },
+    "borrower_segment_T2B": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.1,
+        "direction": "-"
+    },
+    "industry_sector_Textile": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.1,
+        "direction": "-"
+    },
+    "industry_sector_Auto Components": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.1,
+        "direction": "-"
+    },
+    "business_type_Manufacturing": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.1,
+        "direction": "-"
+    },
+    "enterprise_category_Small": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.1,
+        "direction": "+"
+    },
+    "industry_sector_Healthcare": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.1,
+        "direction": "+"
+    },
+    "industry_sector_Agriculture": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.1,
+        "direction": "+"
+    },
+    "borrower_segment_T1": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.1,
+        "direction": "+"
+    },
+    "industry_sector_Retail": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.1,
+        "direction": "-"
+    },
+    "industry_sector_Education Services": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.0,
+        "direction": "+"
+    },
+    "industry_sector_IT Services": {
+        "text_template": "+{val}% risk due to {feature_name}",
+        "magnitude": 0.0,
+        "direction": "+"
+    },
+    "enterprise_category_Micro": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.0,
+        "direction": "-"
+    },
+    "enterprise_category_Medium": {
+        "text_template": "-{val}% risk due to {feature_name}",
+        "magnitude": 0.0,
+        "direction": "-"
+    }
+}
