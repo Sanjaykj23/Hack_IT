@@ -38,11 +38,18 @@ def calculate_psi(baseline: np.ndarray, current: np.ndarray, buckets: int = 10) 
     psi_values = (current_pct - baseline_pct) * np.log(current_pct / baseline_pct)
     return float(np.sum(psi_values))
 
+_BASELINE_DF = None
+
 def _load_baseline():
-    for path in ["data/advanced_msme_loan_data.csv", "backend/data/advanced_msme_loan_data.csv"]:
-        if os.path.exists(path):
-            return pd.read_csv(path)
-    raise FileNotFoundError("Dataset not found. Run advanced_data_generation.py first.")
+    global _BASELINE_DF
+    if _BASELINE_DF is None:
+        for path in ["data/advanced_msme_loan_data.csv", "backend/data/advanced_msme_loan_data.csv"]:
+            if os.path.exists(path):
+                _BASELINE_DF = pd.read_csv(path)
+                break
+        if _BASELINE_DF is None:
+            raise FileNotFoundError("Dataset not found. Run advanced_data_generation.py first.")
+    return _BASELINE_DF
 
 @mlops_router.get("/drift-status")
 async def check_drift():

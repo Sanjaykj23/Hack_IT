@@ -46,13 +46,16 @@ def get_lgd(collateral_ratio: float, industry: str, macro_stress: float = 1.0) -
     industry_mult = INDUSTRY_LGD_MULTIPLIER.get(industry, 1.00)
     return float(np.clip(base_lgd * industry_mult * macro_stress, 0.10, 0.90))
 
+_PORTFOLIO_DF = None
+
 def load_sample_portfolio(num_samples=1000):
-    try:
-        # ✅ FIXED: was `df(pd.read_csv(...))` — invalid syntax that crashed the endpoint
-        df = pd.read_csv("data/advanced_msme_loan_data.csv").sample(num_samples, random_state=42)
-    except Exception:
-        df = pd.read_csv("backend/data/advanced_msme_loan_data.csv").sample(num_samples, random_state=42)
-    return df
+    global _PORTFOLIO_DF
+    if _PORTFOLIO_DF is None:
+        try:
+            _PORTFOLIO_DF = pd.read_csv("data/advanced_msme_loan_data.csv")
+        except Exception:
+            _PORTFOLIO_DF = pd.read_csv("backend/data/advanced_msme_loan_data.csv")
+    return _PORTFOLIO_DF.sample(num_samples, random_state=42)
 
 @portfolio_router.get("/summary", response_model=PortfolioSummary)
 async def get_portfolio_summary(stress_factor: float = 0.0):

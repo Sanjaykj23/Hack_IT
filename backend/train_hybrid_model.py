@@ -9,7 +9,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import brier_score_loss, roc_auc_score
 from sklearn.calibration import CalibratedClassifierCV
-from xgboost import XGBClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 import os
 
 print("Initializing Phase 2 v2: Training 5-Segment Hybrid Risk Engine...")
@@ -87,23 +87,18 @@ preprocessor = ColumnTransformer(
 )
 
 # ─── MODEL ────────────────────────────────────────────────────────────────────
-xgb_model = XGBClassifier(
-    n_estimators=150,
+hgb_model = HistGradientBoostingClassifier(
+    max_iter=150,
     max_depth=4,
     learning_rate=0.05,
-    subsample=0.85,
-    colsample_bytree=0.80,
-    min_child_weight=5,
-    objective='binary:logistic',
-    eval_metric='logloss',
     random_state=42
 )
 
-calibrated_xgb = CalibratedClassifierCV(estimator=xgb_model, method='sigmoid', cv=3)
+calibrated_hgb = CalibratedClassifierCV(estimator=hgb_model, method='sigmoid', cv=3)
 
 pipeline = Pipeline(steps=[
     ('preprocessor', preprocessor),
-    ('classifier', calibrated_xgb)
+    ('classifier', calibrated_hgb)
 ])
 
 print("\nTraining Calibrated Hybrid Risk Model (5-segment, lightweight v3.1)...")
@@ -140,21 +135,25 @@ preprocessor.fit(X)
 ohe_features = preprocessor.named_transformers_['cat'].get_feature_names_out(categorical_cols)
 all_feature_names = numerical_cols + list(ohe_features) + binary_cols
 
-shap_xgb = XGBClassifier(n_estimators=100, max_depth=4, random_state=42).fit(
+shap_model = RandomForestClassifier(n_estimators=50, max_depth=4, random_state=42).fit(
     preprocessor.transform(X), y
 )
-explainer    = shap.TreeExplainer(shap_xgb)
+explainer    = shap.TreeExplainer(shap_model)
 X_transformed = preprocessor.transform(X)
 
 # Use a sample for SHAP to save compute (1000 random rows)
 sample_idx = np.random.choice(len(X_transformed), min(3000, len(X_transformed)), replace=False)
 shap_values = explainer.shap_values(X_transformed[sample_idx])
 
+# SHAP returned for RandomForestClassifier binary classification is often a list of arrays [shap_values_class0, shap_values_class1]
+# or an array of shape (n_samples, n_features, 2). 
+shap_values_target = shap_values[1] if isinstance(shap_values, list) else (shap_values[:, :, 1] if len(shap_values.shape) == 3 else shap_values)
+
 feature_importance = {}
 for i, feature in enumerate(all_feature_names):
-    mean_abs_shap = float(np.mean(np.abs(shap_values[:, i])))
+    mean_abs_shap = float(np.mean(np.abs(shap_values_target[:, i])))
     if mean_abs_shap > 0:
-        corr = np.corrcoef(X_transformed[sample_idx, i], shap_values[:, i])[0, 1]
+        corr = np.corrcoef(X_transformed[sample_idx, i].flatten(), shap_values_target[:, i].flatten())[0, 1]
         direction = "increases" if corr > 0 else "decreases"
         feature_importance[feature] = {
             "impact_magnitude": float(np.round(mean_abs_shap * 10, 1)),

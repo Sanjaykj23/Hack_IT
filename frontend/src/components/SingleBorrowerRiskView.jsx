@@ -59,7 +59,7 @@ const Toggle = ({ label, fieldKey, value, onChange }) => (
     </div>
 );
 
-const Chip = ({ label, value, source }) => (
+const Chip = ({ label, value }) => (
     <div className="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
         <span className="text-xs text-blue-600 font-medium">{label}</span>
         <div className="text-right">
@@ -69,10 +69,10 @@ const Chip = ({ label, value, source }) => (
     </div>
 );
 
-const Section = ({ icon: Icon, title, color = 'blue', children }) => (
-    <div className="border border-gray-100 rounded-xl p-4 bg-gray-50/50 space-y-3">
+const Section = ({ icon: IconSection, title, color = 'blue', children }) => (
+    <div className={`border border-gray-100 rounded-xl p-4 bg-gray-50/50 space-y-3`}>
         <h4 className={`text-sm font-bold text-${color}-800 flex items-center gap-2`}>
-            <Icon className="h-4 w-4" />{title}
+            {IconSection && <IconSection className="h-4 w-4" />} {title}
         </h4>
         <div className="grid grid-cols-2 gap-x-4 gap-y-3">{children}</div>
     </div>
@@ -148,8 +148,8 @@ const SegmentGateway = ({ onSegmentSelected }) => {
 
             {segResult && meta && (
                 <div className={`border-2 rounded-xl p-4 space-y-3 ${segResult.tier === 'T1' || segResult.tier === 'T2A' ? 'border-green-200 bg-green-50' :
-                        segResult.tier === 'T2B' || segResult.tier === 'T2C' ? 'border-amber-200 bg-amber-50' :
-                            'border-red-200 bg-red-50'}`}>
+                    segResult.tier === 'T2B' || segResult.tier === 'T2C' ? 'border-amber-200 bg-amber-50' :
+                        'border-red-200 bg-red-50'}`}>
                     <div className="flex items-center gap-3">
                         <meta.icon className={`h-8 w-8 ${segResult.tier === 'T1' || segResult.tier === 'T2A' ? 'text-green-600' : segResult.tier === 'T3' ? 'text-red-600' : 'text-amber-600'}`} />
                         <div>
@@ -299,7 +299,6 @@ const SingleBorrowerRiskView = () => {
     const [utilityBills, setUtilityBills] = useState(Array(6).fill({ expected_amount: 0, paid_amount: 0, days_late: 0 }));
     const [stabilityData, setStabilityData] = useState({ years_at_current_location: 0, employee_count: 0, years_with_primary_supplier: 0, owns_premises: false, trade_licence_registered: false, trade_association_member: false });
     const [stabilityScore, setStabilityScore] = useState(null);
-    const [computedFeatures, setComputedFeatures] = useState(null);
 
     // CSV
     const fileInputRef = useRef();

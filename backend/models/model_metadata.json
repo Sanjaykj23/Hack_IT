@@ -1,5 +1,5 @@
 {
-    "model_version": "v3.0-5segment",
+    "model_version": "v3.1-5segment-fast",
     "features": [
         "enterprise_category",
         "business_type",
@@ -55,8 +55,8 @@
         "T3"
     ],
     "training_samples": 12000,
-    "roc_auc": 0.6561,
-    "brier_score": 0.1368,
+    "roc_auc": 0.6654,
+    "brier_score": 0.1359,
     "new_features_v3": [
         "stability_score",
         "income_confidence_encoded",
