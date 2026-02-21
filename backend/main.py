@@ -35,16 +35,10 @@ app.include_router(segment_router)
 app.include_router(feature_extractor_router)
 app.include_router(stability_router)
 
-print("Loading Hybrid Risk Model Pipeline and Explainability mapping...")
-try:
-    risk_pipeline = joblib.load("models/hybrid_risk_model.joblib")
-    with open("models/explainability_map.json", "r") as f:
-        explainability_map = json.load(f)
-    print("✅ Models loaded successfully.")
-except Exception as e:
-    print(f"⚠️ Warning: Could not load models. Did you run train_hybrid_model.py? Error: {e}")
-    risk_pipeline = None
-    explainability_map = {}
+# Lazy loading: model will be loaded on first prediction request
+risk_pipeline = None
+explainability_map = {}
+
 
 class MSMEApplicantData(BaseModel):
     # Static
@@ -77,6 +71,12 @@ class MSMEApplicantData(BaseModel):
     gst_delay_months: int
     utility_consistency_pct: float
     upi_volatility_high: int
+    
+    # New v3.1 Stability & Segment Signals
+    stability_score: float = 0.0
+    income_confidence_encoded: int = 2
+    years_at_location: float = 0.0
+    employee_count: int = 0
     
     # Proposed Loan Data
     loan_amount_requested: float
@@ -119,8 +119,16 @@ def map_pd_to_credit_score(pd_val: float) -> int:
 
 @app.post("/predict_risk", response_model=RiskPredictionResponse)
 async def predict_risk(data: MSMEApplicantData):
+    global risk_pipeline, explainability_map
     if risk_pipeline is None:
-        raise HTTPException(status_code=503, detail="Models not loaded")
+        try:
+            print("Lazy loading Hybrid Risk Model Pipeline and Explainability mapping...")
+            risk_pipeline = joblib.load("models/hybrid_risk_model.joblib")
+            with open("models/explainability_map.json", "r", encoding="utf-8") as f:
+                explainability_map = json.load(f)
+            print("[OK] Models loaded successfully.")
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"Model not loaded: {e}")
 
     # Feature Engineering
     proposed_emi = calculate_emi(data.loan_amount_requested, data.loan_tenure_months)
