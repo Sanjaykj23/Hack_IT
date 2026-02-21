@@ -1,5 +1,5 @@
 import React from 'react';
-import PortfolioDashboard from './components/PortfolioDashboard';
+// import PortfolioDashboard from './components/PortfolioDashboard';
 import SingleBorrowerRiskView from './components/SingleBorrowerRiskView';
 import { Shield } from 'lucide-react';
 
@@ -11,7 +11,7 @@ function App() {
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-2">
               <Shield className="h-8 w-8 text-blue-400" />
-              <span className="text-xl font-bold text-white tracking-wide">FlowBank <span className="text-blue-300 font-light">MSME Risk Orchestrator</span></span>
+              <span className="text-xl font-bold text-white tracking-wide">CobraBank <span className="text-blue-300 font-light">MSME Risk Predictor</span></span>
             </div>
             <div className="text-blue-200 text-sm font-medium">
               Hybrid Risk Engine Active
@@ -32,7 +32,8 @@ function App() {
 
         <hr className="border-gray-200" />
 
-        {/* Phase 5: Portfolio Dashboard & Scenario Simulator */}
+        {/* Phase 5: Portfolio Dashboard & Scenario Simulator - REMOVED */}
+        {/*
         <section>
           <div className="mb-4">
             <h2 className="text-lg font-bold text-gray-800">2. Enterprise Risk Management</h2>
@@ -40,6 +41,7 @@ function App() {
           </div>
           <PortfolioDashboard />
         </section>
+        */}
       </main>
     </div>
   );

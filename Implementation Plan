@@ -1,8 +1,8 @@
-# MSME Credit Engine v3.0 — Implementation Plan
+# MSME Credit Predictor v3.0 — Implementation Plan
 
 ## Objective
 
-Redesign the MSME lending risk orchestrator from a single-pathway model into a **5-segment adaptive credit engine** that can underwrite:
+Redesign the MSME lending risk predictor from a single-pathway model into a **5-segment adaptive credit engine** that can underwrite:
 - Formally registered businesses with full financial documentation
 - Semi-formal businesses with partial digital footprints
 - Fully informal cash-economy businesses with zero formal records

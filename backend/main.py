@@ -10,13 +10,13 @@ from typing import Dict, List, Optional
 from uuid import uuid4
 
 # Import routers
-from portfolio_manager import portfolio_router
+# from portfolio_manager import portfolio_router # Dashboard Removed
 from mlops_monitor import mlops_router
 from segment_router import segment_router, SEGMENT_POLICY
 from feature_extractor import feature_extractor_router
 from stability_scorecard import stability_router
 
-app = FastAPI(title="AI-Powered MSME Lending Risk Orchestrator")
+app = FastAPI(title="AI-Powered MSME Lending Risk Predictor")
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,7 +27,7 @@ app.add_middleware(
 )
 
 # Phase 4: Portfolio simulation layer
-app.include_router(portfolio_router)
+# app.include_router(portfolio_router) # Dashboard Removed
 # Phase 5: MLOps monitoring
 app.include_router(mlops_router)
 # Phase 6 (NEW): 5-Tier segment engine
@@ -78,7 +78,13 @@ class MSMEApplicantData(BaseModel):
     years_at_location: float = 0.0
     employee_count: int = 0
     
+    # Banking Intelligence (Tier 1 / Bank Statement derived)
+    avg_monthly_balance: float = 0.0
+    cheque_bounce_count: int = 0
+    banking_vintage_months: int = 0
+    
     # Proposed Loan Data
+
     loan_amount_requested: float
     loan_tenure_months: int
 
@@ -95,27 +101,30 @@ class RiskPredictionResponse(BaseModel):
     layer_3_final_pd: float
     risk_based_interest_rate_pct: float
     expected_loss_amt: float
+    monthly_emi: float
     top_driver_explanations: List[str]
     credit_score_mapped: int
     borrower_segment: str
     segment_label: str
     income_confidence: str
 
+
 def calculate_emi(principal, tenure_months, annual_rate=0.12):
     monthly_rate = annual_rate / 12
     return (principal * monthly_rate * ((1 + monthly_rate) ** tenure_months)) / (((1 + monthly_rate) ** tenure_months) - 1)
 
-def map_pd_to_credit_score(pd_val: float) -> int:
+def map_pd_to_credit_score(pd_val: float, caps: List[int] = None) -> int:
     """
-    Map PD (0.0 to 1.0) to a 300-900 credit score.
-    ✅ FIXED: uses a sigmoid/logistic curve instead of linear mapping.
-    In real credit systems, the score compresses logarithmically at the
-    extremes relative to the log-odds ratio — this models that correctly.
+    Map PD to 300-900 score with banker-centric hard caps.
     """
     pd_val = max(0.01, min(0.99, pd_val))
-    # Sigmoid curve: high-PD borrowers score near 300, low-PD near 900
     score = 300 + (600 / (1 + np.exp(5 * (pd_val - 0.5))))
+    
+    if caps:
+        score = min(score, *caps)
+        
     return int(round(score))
+
 
 @app.post("/predict_risk", response_model=RiskPredictionResponse)
 async def predict_risk(data: MSMEApplicantData):
@@ -150,25 +159,49 @@ async def predict_risk(data: MSMEApplicantData):
     layer_1_pd = float(risk_pipeline.predict_proba(input_df)[0, 1])
 
     # ---------------------------------------------------------
-    # LAYER 2: Policy Filter Logic
-    # ✅ FIXED: deterministic rejection is now a separate flag.
-    # PD stays statistical — we never hard-override it to 0.99.
-    # This prevents contaminating risk calibration with policy decisions.
+    # LAYER 2: Policy Filter & Scoring Caps (Banker-Centric)
     # ---------------------------------------------------------
     policy_status = "Pass"
     policy_rejected = False
+    score_caps = []
 
-    if emi_to_revenue_ratio > 0.65:
-        policy_status = "Reject: Heavy EMI Burden"
+    # 1. Hard Rejections
+    if emi_to_revenue_ratio > 0.60:
+        policy_status = "Reject: Critical EMI-to-Income Ratio (>60%)"
+        policy_rejected = True
+    elif data.past_defaults > 0:
+        policy_status = "Reject: History of Credit Defaults"
         policy_rejected = True
     elif data.industry_sector in ['Speculative Trading', 'Crypto']:
         policy_status = "Reject: Blacklisted Industry"
         policy_rejected = True
-    elif data.years_in_operation < 1:
-        policy_status = "Review: Insufficient Business Age"
-        # Soft statistical penalty — adjust PD in logit space, not raw override
-        logit_pd = np.log(layer_1_pd / (1 - layer_1_pd))
-        layer_1_pd = float(np.clip(1 / (1 + np.exp(-(logit_pd + 0.40))), 0.01, 0.99))
+    elif data.borrower_segment == "T1" and data.cheque_bounce_count > 2:
+        policy_status = "Reject: Multiple Cheque Bounces in Bank Statement"
+        policy_rejected = True
+
+    # 2. Strict Scoring Caps
+    if emi_to_revenue_ratio > 0.50:
+        score_caps.append(600)  # High burden limit
+    elif emi_to_revenue_ratio > 0.35:
+        score_caps.append(699)  # Medium burden threshold
+        
+    if data.years_in_operation < 2:
+        score_caps.append(650)  # Business vintage cap
+        
+    if data.volatility_index > 0.40:
+        score_caps.append(600)  # Excessive volatility cap
+
+    # 3. Soft Review Flags
+    if not policy_rejected:
+        if data.existing_loans > 5:
+            policy_status = "Review: High Multi-Lending Over-leverage"
+        elif data.years_in_operation < 1:
+            policy_status = "Review: Insufficient Business Age"
+            # Soft statistical penalty
+            logit_pd = np.log(layer_1_pd / (1 - layer_1_pd))
+            layer_1_pd = float(np.clip(1 / (1 + np.exp(-(logit_pd + 0.40))), 0.01, 0.99))
+
+
 
     # ---------------------------------------------------------
     # LAYER 3: Portfolio Adjustment
@@ -236,7 +269,8 @@ async def predict_risk(data: MSMEApplicantData):
         top_explanations.append(f"✅ -{val}% risk due to Strong Revenue Growth")
 
     # Map back to old score format for visual familiarty
-    credit_score = map_pd_to_credit_score(final_pd)
+    credit_score = map_pd_to_credit_score(final_pd, caps=score_caps)
+
 
     return RiskPredictionResponse(
         layer_1_behavioral_pd=round(layer_1_pd, 6),
@@ -245,12 +279,14 @@ async def predict_risk(data: MSMEApplicantData):
         layer_3_final_pd=round(final_pd, 6),
         risk_based_interest_rate_pct=round(final_interest_rate, 2),
         expected_loss_amt=round(expected_loss, 2),
+        monthly_emi=round(proposed_emi, 2),
         top_driver_explanations=top_explanations,
         credit_score_mapped=credit_score,
         borrower_segment=segment,
         segment_label=segment_label,
         income_confidence=income_confidence
     )
+
 
 if __name__ == "__main__":
     import uvicorn

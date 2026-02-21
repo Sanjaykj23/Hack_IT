@@ -40,9 +40,12 @@ const EMPTY_FORM = {
     seasonality_coefficient: '', existing_loans: '0', existing_emi: '0',
     bank_account_years: '', credit_history_length: '0', delayed_payments: '0',
     past_defaults: '0', gst_delay_months: '0', utility_consistency_pct: '',
-    upi_volatility_high: 0, loan_amount_requested: '', loan_tenure_months: '',
+    upi_volatility_high: 0,
+    avg_monthly_balance: '0', cheque_bounce_count: '0', banking_vintage_months: '0',
+    loan_amount_requested: '', loan_tenure_months: '',
     macro_stress_factor: 'Baseline', borrower_segment: 'T1',
 };
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const ic = (err) => `w-full mt-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 transition-all ${err ? 'border-red-400 focus:ring-red-300 bg-red-50' : 'border-gray-200 focus:ring-blue-300 bg-white'}`;
@@ -375,8 +378,9 @@ const SingleBorrowerRiskView = () => {
         Object.keys(formData).forEach(k => { if (formData[k] !== '') payload[k] = formData[k]; });
 
         // Type coercion
-        const nums = ['years_in_operation', 'annual_turnover', 'monthly_revenue', 'property_value', 'machinery_value', 'inventory_value', 'revenue_growth_rate', 'revenue_momentum', 'volatility_index', 'payment_delay_trend_slope', 'seasonality_coefficient', 'existing_loans', 'existing_emi', 'bank_account_years', 'credit_history_length', 'delayed_payments', 'past_defaults', 'gst_delay_months', 'utility_consistency_pct', 'loan_amount_requested', 'loan_tenure_months'];
+        const nums = ['years_in_operation', 'annual_turnover', 'monthly_revenue', 'property_value', 'machinery_value', 'inventory_value', 'revenue_growth_rate', 'revenue_momentum', 'volatility_index', 'payment_delay_trend_slope', 'seasonality_coefficient', 'existing_loans', 'existing_emi', 'bank_account_years', 'credit_history_length', 'delayed_payments', 'past_defaults', 'gst_delay_months', 'utility_consistency_pct', 'loan_amount_requested', 'loan_tenure_months', 'avg_monthly_balance', 'cheque_bounce_count', 'banking_vintage_months'];
         nums.forEach(k => { payload[k] = parseFloat(payload[k]) || 0; });
+
         payload.gst_registered = parseInt(payload.gst_registered) || 0;
         payload.udyam_registered = parseInt(payload.udyam_registered) || 0;
         payload.upi_volatility_high = parseInt(payload.upi_volatility_high) || 0;
@@ -605,6 +609,24 @@ const SingleBorrowerRiskView = () => {
                                 </Section>
                             )}
 
+                            {/* Banking Intelligence (Tier 1 only) */}
+                            {segment === 'T1' && (
+                                <Section icon={Landmark} title="Banking Intelligence (Bank Statement)" color="emerald">
+                                    <div>
+                                        <Label>Avg Monthly Balance (6m)</Label>
+                                        <input type="number" name="avg_monthly_balance" value={formData.avg_monthly_balance} onChange={handleInput} placeholder="0" className={ic(false)} />
+                                    </div>
+                                    <div>
+                                        <Label>Cheque Bounce Count</Label>
+                                        <input type="number" name="cheque_bounce_count" value={formData.cheque_bounce_count} onChange={handleInput} placeholder="0" className={ic(false)} />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <Label>Primary Banking Vintage (Months)</Label>
+                                        <input type="number" name="banking_vintage_months" value={formData.banking_vintage_months} onChange={handleInput} placeholder="e.g. 24" className={ic(false)} />
+                                    </div>
+                                </Section>
+                            )}
+
                             {/* Assets */}
                             {!isT3 && (
                                 <Section icon={CreditCard} title="Assets & Credit">
@@ -742,11 +764,12 @@ const SingleBorrowerRiskView = () => {
                                 </div>
                             </div>
                             <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 col-span-2">
-                                <span className="text-xs font-semibold text-gray-400 uppercase">Expected Loss</span>
+                                <span className="text-xs font-semibold text-gray-400 uppercase">Estimated Monthly EMI</span>
                                 <div className="text-xl font-bold mt-1 text-gray-800">
-                                    ₹{singleBorrowerResult.expected_loss_amt.toLocaleString('en-IN')}
+                                    ₹{singleBorrowerResult.monthly_emi.toLocaleString('en-IN')}
                                 </div>
                             </div>
+
                         </div>
 
                         {/* Segment info strip */}

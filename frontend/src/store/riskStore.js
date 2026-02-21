@@ -2,29 +2,18 @@ import { create } from 'zustand';
 import axios from 'axios';
 
 const useRiskStore = create((set, get) => ({
-    portfolioSummary: null,
+    // portfolioSummary: null, - REMOVED
     singleBorrowerResult: null,
     isLoading: false,
     error: null,
 
-    // Scenario Simulator State
-    scenarioStressFactor: 0.0,
+    // Scenario Simulator State - REMOVED
 
-    setStressFactor: (val) => {
-        set({ scenarioStressFactor: val });
-        get().fetchPortfolioSummary();
-    },
-
+    /* 
     fetchPortfolioSummary: async () => {
-        set({ isLoading: true, error: null });
-        try {
-            const { scenarioStressFactor } = get();
-            const response = await axios.get(`http://localhost:8000/portfolio/summary?stress_factor=${scenarioStressFactor}`);
-            set({ portfolioSummary: response.data, isLoading: false });
-        } catch (err) {
-            set({ error: err.message, isLoading: false });
-        }
+        ...
     },
+    */
 
     submitSingleBorrower: async (borrowerData) => {
         set({ isLoading: true, error: null });
